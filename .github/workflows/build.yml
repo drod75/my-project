@@ -24,4 +24,4 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Run Python script
-      run: python main.py # Replace 'your_script_name.py' with the actual name of your Python file
+      run: streamlit run main.py # Replace 'your_script_name.py' with the actual name of your Python file
