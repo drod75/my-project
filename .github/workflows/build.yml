@@ -1,27 +1,65 @@
-name: Python CI
+# .github/workflows/sqlite_workflow.yml
+
+name: SQLite DB Operations (CLI Setup) and Data Print
 
 on:
   push:
-    branches: [ main ] # Or any other branches you want to trigger the workflow on
+    branches: [ main ] # Trigger on pushes to the main branch
   pull_request:
-    branches: [ main ] # Or any other branches you want to trigger the workflow on
+    branches: [ main ] # Trigger on pull requests to the main branch
 
 jobs:
-  build:
-    runs-on: ubuntu-latest # You can choose other runners like windows-latest or macos-latest
+  build_and_print_data:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
 
     steps:
-    - uses: actions/checkout@v4 # Checks out your repository under $GITHUB_WORKSPACE
+      - name: Check out repository code
+        uses: actions/checkout@v4 # Action to check out your repository
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13' # Specify Python 3.13
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Action to set up a Python environment
+        with:
+          python-version: '3.11' # Specify the Python version
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Ensure sqlite3 CLI is available (usually is on ubuntu-latest)
+          sudo apt-get update && sudo apt-get install -y sqlite3
 
-    - name: Run Python script
-      run: python main.py # Replace 'your_script_name.py' with the actual name of your Python file
+      - name: Create and populate SQLite database using sqlite3 CLI
+        run: |
+          sqlite3 mydatabase.db <<EOF
+          -- Drop the table if it exists to ensure a clean state for each run
+          DROP TABLE IF EXISTS users;
+
+          -- Create the 'users' table
+          CREATE TABLE users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              email TEXT NOT NULL UNIQUE,
+              age INTEGER,
+              city TEXT
+          );
+
+          -- Insert some sample data
+          INSERT INTO users (name, email, age, city) VALUES ('Alice Wonderland', 'alice@example.com', 30, 'New York');
+          INSERT INTO users (name, email, age, city) VALUES ('Bob The Builder', 'bob@example.com', 45, 'London');
+          INSERT INTO users (name, email, age, city) VALUES ('Charlie Brown', 'charlie@example.com', 8, 'Paris');
+          INSERT INTO users (name, email, age, city) VALUES ('Diana Prince', 'diana@example.com', 28, 'Themyscira');
+          INSERT INTO users (name, email, age, city) VALUES ('Edward Scissorhands', 'edward@example.com', 25, 'Suburbia');
+
+          -- Optional: Verify insertion (output will go to workflow log)
+          SELECT 'Total users: ' || COUNT(*) FROM users;
+          .exit
+          EOF
+        shell: bash # Explicitly use bash for the here document
+
+      - name: Verify database file creation
+        run: |
+          ls -l mydatabase.db
+          echo "Size of mydatabase.db: $(stat -c%s mydatabase.db) bytes"
+
+      - name: Run Python script to print data
+        run: python main.py # Execute the script to read and print data from mydatabase.db
