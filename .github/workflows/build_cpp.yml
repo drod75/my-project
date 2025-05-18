@@ -1,0 +1,42 @@
+# .github/workflows/cpp-build-run.yml
+
+name: C++ Build and Run # Name of the workflow, displayed on GitHub Actions tab
+
+# Controls when the workflow will run
+on:
+  push: # Run on pushes to the specified branches
+    branches: [ main, master ] # Adjust if your main branch has a different name
+  pull_request: # Run on pull requests targeting the specified branches
+    branches: [ main, master ] # Adjust if your main branch has a different name
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  build-and-run: # Define a job named "build-and-run"
+    runs-on: ubuntu-latest # Specify the runner environment (latest Ubuntu)
+
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Check out code
+        uses: actions/checkout@v4 # Use the standard checkout action
+
+      # Step 2: Set up C++ compiler (g++)
+      # This step is often not strictly necessary on ubuntu-latest as g++ is usually pre-installed.
+      # However, it's good practice to include it for clarity or if you need a specific version.
+      - name: Set up C++ compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ # Installs the g++ compiler
+
+      # Step 3: Compile the C++ program
+      # Assumes your C++ file is named main.cpp
+      # The output executable will be named "course_program"
+      - name: Compile C++ program
+        run: g++ main.cpp -o course_program -std=c++17 # Compiles main.cpp into course_program using C++17 standard
+        # If your C++ file has a different name, change "main.cpp" accordingly.
+        # For example, if your file is "course_manager.cpp":
+        # run: g++ course_manager.cpp -o course_program -std=c++17
+
+      # Step 4: Run the compiled program
+      - name: Run C++ program
+        run: ./course_program # Executes the compiled program
+
